@@ -64,11 +64,31 @@ def get_user_tasks(user_id: int) -> list[str]:
             from tasks_test tt
             where user_id = ?
         """
+        execution = cursor.execute(sql_query, uid).fetchall()
         tasks = []
-        for row in cursor.execute(sql_query, uid):
-            cnt = row[0]
-            task = row[1]
-            date = datetime.fromisoformat(row[2]).strftime("%d.%m.%Y")
-            tasks.append(f'{cnt}. {task} {date}')
+        if execution is not None:
+            for row in execution:
+                cnt = row[0]
+                task = row[1]
+                date = datetime.fromisoformat(row[2]).strftime("%d.%m.%Y")
+                tasks.append(f'{cnt}. {task} {date}')
+        else:
+            print('Записей нет')
 
         return tasks
+
+
+def clear_user_tasks(user_id: int) -> bool:
+    with sqlite3.connect(path) as connection:
+        cursor = connection.cursor()
+        uid = [user_id, ]
+        cursor.execute("""
+            delete from tasks_test
+            where user_id = ?
+        """, uid)
+        connection.commit()
+        is_cleared = cursor.execute("select * from tasks_test where user_id = ?", uid).fetchone()
+        if is_cleared is None:
+            return True
+        else:
+            return False
