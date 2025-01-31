@@ -1,8 +1,5 @@
-import logging
 import sqlite3
 from datetime import datetime
-
-from dotenv import dotenv_values
 
 import config_reader
 
@@ -13,11 +10,11 @@ def adapt_datetime_iso(val):
 
 
 sqlite3.register_adapter(datetime, adapt_datetime_iso)
+path = config_reader.config.db_path.get_secret_value()
 
 
-
-def add_task(task: dict[str, str | int], user: dict[str, int | str]):
-    with sqlite3.connect(config_reader.config.db_path.get_secret_value()) as con:
+def add_task(task: dict[str, str | int | datetime], user: dict[str, int | str | None]):
+    with sqlite3.connect(path) as con:
         cursor = con.cursor()
         task_val, date_to_do, user_id = task.values()
         task_values = [
@@ -52,8 +49,9 @@ def add_task(task: dict[str, str | int], user: dict[str, int | str]):
             return
         con.commit()
 
+
 def get_user_tasks(user_id: int) -> str:
-    with sqlite3.connect(config_reader.config.db_path.get_secret_value()) as connection:
+    with sqlite3.connect(path) as connection:
         cursor = connection.cursor()
         uid = (user_id,)
         tasks = [row[1] for row in cursor.execute('select * from tasks_test where user_id = ?', uid)]
