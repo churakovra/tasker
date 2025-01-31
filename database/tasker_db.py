@@ -50,9 +50,25 @@ def add_task(task: dict[str, str | int | datetime], user: dict[str, int | str | 
         con.commit()
 
 
-def get_user_tasks(user_id: int) -> str:
+def get_user_tasks(user_id: int) -> list[str]:
     with sqlite3.connect(path) as connection:
         cursor = connection.cursor()
-        uid = (user_id,)
-        tasks = [row[1] for row in cursor.execute('select * from tasks_test where user_id = ?', uid)]
-        return ';\n'.join(tasks)
+        uid = [user_id, ]
+        sql_query = """
+        select 
+                row_number() over (order by task_id) rn,
+                task,
+                date_to_do,
+                date_add,
+                user_id
+            from tasks_test tt
+            where user_id = ?
+        """
+        tasks = []
+        for row in cursor.execute(sql_query, uid):
+            cnt = row[0]
+            task = row[1]
+            date = datetime.fromisoformat(row[2]).strftime("%d.%m.%Y")
+            tasks.append(f'{cnt}. {task} {date}')
+
+        return tasks

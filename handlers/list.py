@@ -7,4 +7,5 @@ router = Router()
 
 @router.message(Command("list"))
 async def command_list(message: Message):
-    await message.answer(get_user_tasks(message.from_user.id))
+    tasks = '\n'.join(get_user_tasks(message.from_user.id))
+    await message.answer(tasks)
