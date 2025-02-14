@@ -1,9 +1,9 @@
 import re
+from datetime import datetime
 
 from aiogram import Router
 from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
-from datetime import datetime
 
 from database.tasker_db import add_task
 
@@ -24,20 +24,18 @@ async def command_add(message: Message, command: CommandObject):
         pattern = r"(\d{2}\.\d{2}\.\d{4})"
         match = re.search(pattern=pattern, string=command.args)
         if match:
-
             date = match.group(1)
             remaining_text = command.args.replace(date, '').strip()
-
+            day, month, year = date.split('.')
+            date_dt = datetime(day=int(day), month=int(month), year=int(year))
         else:
             raise ValueError
     except ValueError:
         await message.answer(error_text)
         return
-
-    day,month,year = date.split('.')
     task = {
         'task': str(remaining_text),
-        'date_to_do': datetime(day=int(day), month=int(month), year=int(year)),
+        'date_to_do': date_dt,
         'user_id': message.from_user.id
     }
     user = {

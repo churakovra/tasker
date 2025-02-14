@@ -92,3 +92,37 @@ def clear_user_tasks(user_id: int) -> bool:
             return True
         else:
             return False
+
+
+def delete_task(user_id: int, task_num: int) -> bool:
+    values = [user_id, task_num]
+    with sqlite3.connect(path) as connection:
+        cursor = connection.cursor()
+        size_before = cursor.execute(
+            "select count(*) from tasks_test where user_id = ?",
+            [values[0]]
+        ).fetchone()[0]
+        cursor.execute(
+            """
+                delete from tasks_test
+                where task_id = (
+                    select task_id
+                    from (
+                        select 
+                            task_id,
+                            user_id,
+                            row_number() over(order by task_id) rn 
+                        from tasks_test
+                        where user_id = ?
+                        ) 
+                    where rn = ?
+                )
+            """,
+            values
+        )
+        connection.commit()
+        size_after = cursor.execute(
+            "select count(*) from tasks_test where user_id = ?",
+            [values[0]]
+        ).fetchone()[0]
+        return size_before > size_after
